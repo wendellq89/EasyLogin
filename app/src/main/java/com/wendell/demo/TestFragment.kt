@@ -13,15 +13,10 @@ import com.wendell.thirdlogin.LoginCallback
 import com.wendell.thirdlogin.LoginType
 import com.wendell.thirdlogin.ThirdPartyLogin
 
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
 class TestFragment : Fragment() {
 
     private var _binding: FragmentTestBinding? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
     private val binding get() = _binding!!
 
     override fun onCreateView(
