@@ -19,6 +19,6 @@ Wrap authorized logins for Google, Facebook, Twitter, LinkedIn and get their id,
 * Call ThirdPartyLogin.login or ThirdPartyLogin.loginFacebook etc. at the buttons used
 
 
-# Thanks
+## Thanks
 
 - [LinkedInSignInAndroidExample](https://github.com/johncodeos-blog/LinkedInSignInAndroidExample)
