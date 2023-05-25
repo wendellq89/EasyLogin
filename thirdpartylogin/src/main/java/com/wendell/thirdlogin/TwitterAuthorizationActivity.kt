@@ -84,7 +84,7 @@ class TwitterAuthorizationActivity : AppCompatActivity() {
 
     inner class TwitterWebViewClient : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
-            if (request.url.toString().startsWith(getString(R.string.twitter_login_redirect_url))) {
+            if (request.url.toString().startsWith(getString(R.string.login_redirect_url))) {
                 handleUrl(request.url.toString())
                 return true
             }
