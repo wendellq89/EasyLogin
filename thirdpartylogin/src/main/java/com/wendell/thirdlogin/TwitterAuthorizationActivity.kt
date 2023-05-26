@@ -24,7 +24,7 @@ import twitter4j.conf.ConfigurationBuilder
 
 /**
  *
- * 通过webvew来授权twitter登录
+ * https://developer.twitter.com/zh-cn/docs/authentication/overview
  * @author Wendell
  * 2023/5/18 16:43
  */
