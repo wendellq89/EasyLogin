@@ -63,6 +63,18 @@ class GoogleLoginClientFactory : ThirdPartyLoginClientFactory {
 
             override fun login(loginCallback: LoginCallback) {
                 _loginCallback = loginCallback
+                val currentUser = auth.currentUser
+                if(currentUser!=null){//已登录的无需重新获取
+                    val names = currentUser.displayName?.getFirstAndLastName() ?: Pair("", "")
+                    val authorizationInfo = AuthorizationInfo(
+                        currentUser.uid, currentUser.email ?: "",
+                        names.first, names.second
+                    )
+                    _loginCallback?.onSuccess(
+                        authorizationInfo, GoogleLogin
+                    )
+                    return
+                }
                 oneTapClient.beginSignIn(signInRequest)
                     .addOnSuccessListener(activity) { result ->
                         //注意，官方的demo是使用旧的startIntentSenderForResult，而result只返回了pendingIntent，需要自己用IntentSenderRequest包装一下
