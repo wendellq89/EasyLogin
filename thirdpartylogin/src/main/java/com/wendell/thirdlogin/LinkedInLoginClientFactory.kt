@@ -19,7 +19,6 @@ class LinkedInLoginClientFactory : ThirdPartyLoginClientFactory {
     private var _loginCallback: LoginCallback? = null
 
     override fun create(activity: ComponentActivity): ThirdPartyLoginClient {
-        //注册StartActivityForResult 替代废弃的需要在activity中使用的onActivityResult
         linkedInObserver = LinkedInLifecycleObserver(activity.activityResultRegistry)
         activity.lifecycle.addObserver(linkedInObserver)
         return object : ThirdPartyLoginClient {
@@ -38,7 +37,6 @@ class LinkedInLoginClientFactory : ThirdPartyLoginClientFactory {
         lateinit var twitterRequest: ActivityResultLauncher<Intent>
 
         override fun onCreate(owner: LifecycleOwner) {
-            //此处代码参考androidx.activity.ComponentActivity.registerForActivityResult的实现，解决没有activity的情况下无法调用registerForActivityResult
             twitterRequest = registry.register("activity_rq#" + "linkedin_login", owner, StartActivityForResult()) { result ->
                 result.data?.let {
                     var authorizationInfo = it.getParcelableExtra<AuthorizationInfo>("authorizationInfo")

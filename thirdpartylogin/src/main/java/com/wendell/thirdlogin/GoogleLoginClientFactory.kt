@@ -43,7 +43,6 @@ class GoogleLoginClientFactory : ThirdPartyLoginClientFactory {
 
     override fun create(activity: ComponentActivity): ThirdPartyLoginClient {
         _activity = activity
-        //注册StartActivityForResult 替代废弃的需要在activity中使用的onActivityResult
         googleObserver = GoogleLifecycleObserver(activity.activityResultRegistry)
         activity.lifecycle.addObserver(googleObserver)
 
@@ -102,7 +101,6 @@ class GoogleLoginClientFactory : ThirdPartyLoginClientFactory {
         lateinit var googleRequest: ActivityResultLauncher<IntentSenderRequest>
 
         override fun onCreate(owner: LifecycleOwner) {
-            //此处代码学习androidx.activity.ComponentActivity.registerForActivityResult的实现，解决没有activity的情况下无法调用registerForActivityResult
             //注意Google有些特别，官方demo是使用startIntentSenderForResult
             googleRequest = registry.register("activity_rq#" + "google_login", owner, StartIntentSenderForResult()) { result ->
                 result.data?.let {
