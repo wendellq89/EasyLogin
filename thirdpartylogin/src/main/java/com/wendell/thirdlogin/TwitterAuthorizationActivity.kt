@@ -77,7 +77,6 @@ class TwitterAuthorizationActivity : AppCompatActivity() {
         }
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     private fun setupTwitterWebView(url: String) {
         wvLogin.loadUrl(url)
     }
