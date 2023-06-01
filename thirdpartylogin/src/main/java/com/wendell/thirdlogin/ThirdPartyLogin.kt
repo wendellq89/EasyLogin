@@ -28,6 +28,8 @@ object ThirdPartyLogin {
      */
     fun initOnCreate(activity: ComponentActivity) {
         googleLoginClient = GoogleLoginClientFactory().create(activity)
+        //默认使用谷歌原生方案
+        //googleLoginClient = GoogleFirebaseLoginClientFactory().create(activity)
         facebookLoginClient = FacebookLoginClientFactory().create(activity)
         twitterLoginClient = TwitterLoginClientFactory().create(activity)
         linkedInLoginClient = LinkedInLoginClientFactory().create(activity)

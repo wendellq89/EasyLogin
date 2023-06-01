@@ -35,13 +35,26 @@ dependencies {
   implementation 'androidx.appcompat:appcompat:1.6.1'
   implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
 
-  //Google Login SDK
+  implementation 'com.google.android.gms:play-services-auth:20.5.0'
+
+  //Google Firebase Login SDK
   implementation platform('com.google.firebase:firebase-bom:31.5.0')
   implementation 'com.google.firebase:firebase-analytics-ktx'
   implementation 'com.google.firebase:firebase-auth-ktx'
-  implementation 'com.google.android.gms:play-services-auth:20.5.0'
+
+  //Google Login SDK
+  implementation ('com.google.api-client:google-api-client:2.0.0'){
+    exclude group: 'xpp3', module: 'xpp3'
+    exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    exclude group: 'junit', module: 'junit'
+    exclude group: 'com.google.android', module: 'android'
+  }
+  implementation 'com.google.api-client:google-api-client-android:2.0.0'
+
   //Facebook Login SDK
   implementation 'com.facebook.android:facebook-login:13.2.0'
+
+
   //Twitter 第三方 API 封装
   implementation 'org.twitter4j:twitter4j-core:4.0.7'
 

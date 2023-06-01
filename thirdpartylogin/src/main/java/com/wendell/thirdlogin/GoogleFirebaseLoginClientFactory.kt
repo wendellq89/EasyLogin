@@ -16,53 +16,64 @@ import com.google.android.gms.auth.api.identity.Identity
 import com.google.android.gms.auth.api.identity.SignInClient
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier
-import com.google.api.client.http.javanet.NetHttpTransport
-import com.google.api.client.json.gson.GsonFactory
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.GoogleAuthProvider
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import com.wendell.thirdlogin.LoginType.GoogleLogin
 import com.wendell.thirdpartylogin.R
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.util.Collections
+import getFirstAndLastName
 
 
 /**
- *
+ * https://firebase.google.com/docs/auth/android/google-signin?hl=zh-cn
+ * https://developers.google.com/identity/one-tap/android/get-saved-credentials?hl=zh-cn
+ * Google Firebase登录授权处理
  * @author Wendell
- * 2023/5/31 9:56
+ * 2023/5/17 11:32
  */
-class GoogleLoginClientFactory : ThirdPartyLoginClientFactory {
+class GoogleFirebaseLoginClientFactory : ThirdPartyLoginClientFactory {
     lateinit var googleObserver: GoogleLifecycleObserver
     private var _loginCallback: LoginCallback? = null
 
     private lateinit var oneTapClient: SignInClient
     private lateinit var signInRequest: BeginSignInRequest
     private lateinit var _activity: Activity
+    private lateinit var auth: FirebaseAuth
 
     override fun create(activity: ComponentActivity): ThirdPartyLoginClient {
         _activity = activity
-        //注册StartActivityForResult 替代废弃的需要在activity中使用的onActivityResult
         googleObserver = GoogleLifecycleObserver(activity.activityResultRegistry)
         activity.lifecycle.addObserver(googleObserver)
+
         oneTapClient = Identity.getSignInClient(activity)
-        signInRequest = BeginSignInRequest.builder().setGoogleIdTokenRequestOptions(
+        signInRequest = BeginSignInRequest.builder()
+            .setGoogleIdTokenRequestOptions(
                 BeginSignInRequest.GoogleIdTokenRequestOptions.builder()
                     .setSupported(true)
-                    // Your server's client ID, not your Android client ID.
                     .setServerClientId(activity.getString(R.string.google_client_id))
                     .setFilterByAuthorizedAccounts(false)
-                    .build())
-            .setAutoSelectEnabled(false)
+                    .build()
+            )
+//            .setAutoSelectEnabled(true)
             .build()
 
         return object : ThirdPartyLoginClient {
 
             override fun login(loginCallback: LoginCallback) {
                 _loginCallback = loginCallback
+                val currentUser = auth.currentUser
+                if(currentUser!=null){//已登录的无需重新获取
+                    val names = currentUser.displayName?.getFirstAndLastName() ?: Pair("", "")
+                    val authorizationInfo = AuthorizationInfo(
+                        currentUser.uid, currentUser.email ?: "",
+                        names.first, names.second
+                    )
+                    _loginCallback?.onSuccess(
+                        authorizationInfo, GoogleLogin
+                    )
+                    return
+                }
                 oneTapClient.beginSignIn(signInRequest)
                     .addOnSuccessListener(activity) { result ->
                         //注意，官方的demo是使用旧的startIntentSenderForResult，而result只返回了pendingIntent，需要自己用IntentSenderRequest包装一下
@@ -90,7 +101,6 @@ class GoogleLoginClientFactory : ThirdPartyLoginClientFactory {
         lateinit var googleRequest: ActivityResultLauncher<IntentSenderRequest>
 
         override fun onCreate(owner: LifecycleOwner) {
-            //此处代码学习androidx.activity.ComponentActivity.registerForActivityResult的实现，解决没有activity的情况下无法调用registerForActivityResult
             //注意Google有些特别，官方demo是使用startIntentSenderForResult
             googleRequest = registry.register("activity_rq#" + "google_login", owner, StartIntentSenderForResult()) { result ->
                 result.data?.let {
@@ -98,37 +108,37 @@ class GoogleLoginClientFactory : ThirdPartyLoginClientFactory {
                 }
 
             }
+            auth = Firebase.auth
         }
     }
 
     private fun handleResult(data: Intent) {
         try {
+
             val credential = oneTapClient.getSignInCredentialFromIntent(data)
-            val idTokenStr = credential.googleIdToken
-            val verifier: GoogleIdTokenVerifier =GoogleIdTokenVerifier.Builder(NetHttpTransport(), GsonFactory())
-                .setAudience(Collections.singletonList(_activity.getString(R.string.google_client_id)))
-                .build();
+            val idToken = credential.googleIdToken
             when {
-                idTokenStr != null -> {
-                    GlobalScope.launch(Dispatchers.IO) {
-                        //https://developers.google.com/identity/one-tap/android/linked-account-signin-client?hl=zh-cn
-                        val idToken: GoogleIdToken = verifier.verify(idTokenStr)
-                        if(idToken!=null){
-                            val payload: Payload = idToken.payload
-                            withContext(Dispatchers.Main) {
-                                val authorizationInfo = AuthorizationInfo(
-                                    payload.subject?:"",  payload.email,
-                                    credential.givenName?:"", credential.familyName?:""
-                                )
-                                _loginCallback?.onSuccess(
-                                    authorizationInfo, GoogleLogin
-                                )
+                idToken != null -> {
+
+                    val firebaseCredential = GoogleAuthProvider.getCredential(idToken, null)
+                    auth.signInWithCredential(firebaseCredential)
+                        .addOnCompleteListener(_activity) { task ->
+                            if (task.isSuccessful) {
+
+                                auth.currentUser?.let {
+                                    val names = it.displayName?.getFirstAndLastName() ?: Pair("", "")
+                                    val authorizationInfo = AuthorizationInfo(
+                                        it.uid, it.email ?: "",
+                                        names.first, names.second
+                                    )
+                                    _loginCallback?.onSuccess(
+                                        authorizationInfo, GoogleLogin
+                                    )
+                                }
+
+
                             }
                         }
-
-
-                    }
-
                 }
 
                 else -> {
